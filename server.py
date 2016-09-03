@@ -16,7 +16,7 @@ class Server(object):
 		self.socket_dict = {}
 		# each channel key corresponds to an array of client sockets
 		self.channel_dict = {}
-		self.server_socket
+		self.server_socket = ''
 
 
 	def serve(self):
@@ -25,10 +25,10 @@ class Server(object):
 		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		server_socket.bind((self.host, self.port ))
 		server_socket.listen(10)
-	 	
+		
 		# add server socket object to the list of readable connections
 		self.socket_list.append(server_socket)
-	 	self.server_socket = server_socket
+		self.server_socket = server_socket
 
 		print "Chat server started on port " + str(self.port )
 	 
@@ -36,9 +36,10 @@ class Server(object):
 
 			# get the list sockets which are ready to be read through select
 			# 4th arg, time_out  = 0 : poll and never block
-			ready_to_read,ready_to_write,in_error = select.select(self.socket_list,[],[],0)
+			ready_to_read,ready_to_write,in_error = select.select(self.socket_list,[],[])
 		  
 			for sock in ready_to_read:
+				print ready_to_read
 				# a new connection request recieved
 				if sock == server_socket: 
 					sockfd, addr = server_socket.accept()
@@ -47,7 +48,7 @@ class Server(object):
 
 					print "Client (%s, %s) connected" % addr
 					 
-					self.broadcast(server_socket, sockfd, "[%s:%s] entered our chatting room\n" % addr)
+					# self.broadcast(server_socket, sockfd, SERVER_CLIENT_JOINED_CHANNEL.format(self.getname(sock)))
 				 
 				# a message from a client, not a new connection
 				else:
@@ -55,12 +56,26 @@ class Server(object):
 					try:
 						# receiving data from the socket.
 						data = sock.recv(RECV_BUFFER)
+						print data
 						if data:
 							# there is something in the socket
-							self.broadcast(server_socket, sock, "\r" + '[' + str(sock.getpeername()) + '] ' + data)  
+							print "sending msg?"
+							# if is a command, handle it 
+							if re.search('^/', msg):
+								self.handle_cmd(msg)
+
+							# if a message, broacast it 
+							else:
+								print what
+								self.broadcast(server_socket, sock, "\r" + '[' + self.getname(sock) + '] ' + data)  
 						else:
 							# remove the socket that's broken    
 							if sock in self.socket_list:
+								if self.socket_dict[sock]:
+									channel = self.socket_dict[sock]
+									self.channel_dict[channel] = self.channel_dict[channel].remove(sock)
+
+								self.socket_dict.pop(sock, None)
 								self.socket_list.remove(sock)
 
 							# at this stage, no data means probably the connection has been broken
@@ -76,22 +91,26 @@ class Server(object):
 
 	# handle commands sent by users
 	def handle_cmd(self, cmd, sock):
-        if re.search('^/join', cmd):
-        	channel = cmd.split()[1]
+		# if re.search('^/join', cmd):
+		# 	channel = cmd.split()[1]
+		# 	self.socket_list[sock] = channel
+		# 	self.channel_dict[channel] += [sock]
 
-        elif re.search('^/create', cmd):
-        	channel = cmd.split()[1]
-        	self.channel_dict[channel] = [sock]
+		# elif re.search('^/create', cmd):
+		# 	channel = cmd.split()[1]
+		# 	self.channel_dict[channel] = [sock]
+		# 	self.socket_dict[sock][1] = channel
 
-        
-        # elif re.search('^/list', cmd):
 
-        elif re.search('^/chatname', cmd):
-        	chatname = cmd.split()[1]
-        	self.socket_dict[sock][0] = chatname 
+		# elif re.search('^/list', cmd):
 
-        else:
-            print SERVER_INVALID_CONTROL_MESSAGE.format(cmd)
+		if re.search('^/chatname', cmd):
+			chatname = cmd.split()[1]
+			self.socket_dict[sock][0] = chatname 
+
+		# 
+		else:
+			print SERVER_INVALID_CONTROL_MESSAGE.format(cmd)
 
 
 
@@ -126,14 +145,20 @@ class Server(object):
 					socket.close()
 					# broken socket, remove it
 					if socket in chan_socket_list:
+						self.socket.list.remove(socket)
+						self.socket_dict.pop(socket, None)
 						chan_socket_list.remove(socket)
 						self.channel_dict[channel] = chan_socket_list
 
+	def getname(self, sock):
+		return self.socket_dict[sock][0]
+
+
 # helper functions
 def pad_msg(msg):
-    if (len(msg) < MESSAGE_LENGTH):
-        msg = msg.ljust(MESSAGE_LENGTH)
-    return msg
+	if (len(msg) < MESSAGE_LENGTH):
+		msg = msg.ljust(MESSAGE_LENGTH)
+	return msg
 
 
 if __name__ == "__main__":

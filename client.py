@@ -13,11 +13,15 @@ class Client(object):
         self.server_host = server_host
         self.server_port = server_port
         self.socket_list = []
-
+        self.chatname = chatname
         # current channel name
+
+        # only changed by command from server
         self.in_channel = ''
         self.channel_lst = []
-        self.chatname = chatname
+
+
+       
 
     def serve(self):
         
@@ -55,15 +59,24 @@ class Client(object):
                         sys.exit()
                     else :
                         #print data
+
+                        # add server command handler
+                        # "/create channel"
+
+
+                        # "/join channel"
+
                         sys.stdout.write(CLIENT_WIPE_ME)
                         sys.stdout.write("\r"+data.rstrip(' '))
                         sys.stdout.write(CLIENT_MESSAGE_PREFIX); sys.stdout.flush()     
                 
                 else :
-                    if first_msg:
-                        msg = "/chatname {}".format(self.chatname)
-                        s.send(pad_msg(msg))
-                    
+                    # if first_msg:
+                    #     msg = "/chatname {}".format(self.chatname)
+                    #     s.send(pad_msg(msg))
+                    #     first_msg = False
+
+
                     # user entered a message
                     msg = sys.stdin.readline()
 
@@ -76,8 +89,9 @@ class Client(object):
                         if not self.in_channel:
                             print SERVER_CLIENT_NOT_IN_CHANNEL
                         else:
-                            
                             s.send(pad_msg(msg))
+
+                    print msg
                     sys.stdout.write('[Me] '); sys.stdout.flush()
 
 
