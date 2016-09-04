@@ -21,8 +21,7 @@ class Server(object):
 		self.server_socket = ''
 
 		# for handling split messages
-		self.buffering = False
-		self.split_buffer = ''
+		self.split_buffers = {}
 
 	def serve(self):
 
@@ -61,8 +60,30 @@ class Server(object):
 					# try:
 					# receiving data from the socket.
 
-					# TODO: split msg: if buffer < 200, wait for a while for the full message
+				
 					data = sock.recv(RECV_BUFFER)
+					
+
+
+					# Split msg: if buffer < 200, wait for a while for the full message
+					if 0 < len(data) < 200 and sock.fileno not in self.split_buffers:
+						print "incomplete msg from {}.... ".format(sock)
+						self.split_buffers[sock.fileno] = data
+						# self.buffering = True
+						continue
+
+					if sock.fileno in self.split_buffers:
+						print "buffering from {} ....".format(sock)
+						self.split_buffers[sock.fileno] += data
+						if len(self.split_buffers[sock.fileno]) == 200:
+
+							data = self.split_buffers[sock.fileno]
+							self.split_buffers.pop(sock.fileno, None)
+							# self.buffering = False
+
+						else:
+							continue
+
 
 					# print sock
 					# print sock.fileno()
@@ -86,14 +107,17 @@ class Server(object):
 
 						# if not command broadcast this message to channel
 						else:
+							# if sock not in any channel, send error message
 							channel = self.getchan(sock)
-
 							if not channel:
 								sock.send(pad_msg(SERVER_CLIENT_NOT_IN_CHANNEL+'\n'))
 							else:
-								self.broadcast_to(channel, server_socket, sock, "\r" + '[' + self.getname(sock) + '] ' + data)  
-					
-					else:
+								to_send = "\r" + '[' + self.getname(sock) + '] ' + data
+								if re.search('$\n', to_send):
+									self.broadcast_to(channel, server_socket, sock, to_send) 
+								else:
+									self.broadcast_to(channel, server_socket, sock, to_send+'\n')
+					else:	
 						# at this stage, no data means probably the connection has been broken
 						self.broadcast_to(self.getchan(sock), server_socket, sock, SERVER_CLIENT_LEFT_CHANNEL.format(self.getname(sock)) + '\n') 
 
@@ -212,7 +236,7 @@ class Server(object):
 			if socket != server_socket and socket != sock :
 				try :
 
-					socket.send(message)
+					socket.send(pad_msg(message))
 				except :
 					print "Could not send message to socket {}".format(socket)
 					# broken socket connection
@@ -230,11 +254,12 @@ class Server(object):
 			# send the message only to peer
 			if socket != server_socket and socket != sock :
 				try :
+					# ensure that message ends with newline
 					socket.send(message)
 				except :
+					print "Could not send message to socket {}".format(socket)
 					# broken socket connection
 					socket.close()
-
 					# broken socket, remove it from data structures
 					if socket in chan_socket_list:
 						self.remove_socket(socket)

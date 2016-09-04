@@ -54,9 +54,11 @@ class Client(object):
 
 					data = sock.recv(RECV_BUFFER)
 
+
+					# TODO split messages handling in client or not???
 					# print "----> length of data is {}".format(len(data))
 
-					# # TODO split messages handling
+					
 					# if len(data) < 200 and not self.buffering:
 					# 	print "incomplete msg ...."
 					# 	self.split_buffer = data
