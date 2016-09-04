@@ -18,6 +18,8 @@ class Client(object):
 		self.in_channel = 'Fakechannel'
 		# self.channel_lst = []
 		self.chatname = chatname
+		self.buffering = False
+		self.split_buffer = ''
 
 	def serve(self):
 		
@@ -49,8 +51,34 @@ class Client(object):
 
 				if sock == s:
 					# incoming message from remote server, s
-					# print "fuck"
+
 					data = sock.recv(RECV_BUFFER)
+
+					# print "----> length of data is {}".format(len(data))
+
+					# # TODO split messages handling
+					# if len(data) < 200 and not self.buffering:
+					# 	print "incomplete msg ...."
+					# 	self.split_buffer = data
+					# 	self.buffering = True
+					# 	continue
+
+					# if self.buffering:
+					# 	print "buffering ...."
+					# 	self.split_buffer += data
+					# 	if len(self.split_buffer) == 200:
+
+					# 		data = self.split_buffer
+					# 		self.split_buffer = ''
+					# 		self.buffering = False
+
+					# 	else:
+					# 		continue
+
+
+					# print ("-----DATA--->{}".format(data))
+
+
 					if not data :
 						print CLIENT_SERVER_DISCONNECTED.format(host, port)
 						sys.exit()
@@ -66,7 +94,7 @@ class Client(object):
 				else :
 
 					if first_msg:
-						msg = "/chatname {}".format(self.chatname)
+						msg = "{}".format(self.chatname)
 						s.send(pad_msg(msg))
 						first_msg = False
 		
@@ -79,7 +107,7 @@ class Client(object):
 						
 					# send msg if not a command
 					else:
-						
+
 						s.send(pad_msg(msg))
 					sys.stdout.write(CLIENT_MESSAGE_PREFIX); sys.stdout.flush()
 

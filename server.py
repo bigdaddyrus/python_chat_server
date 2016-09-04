@@ -21,6 +21,7 @@ class Server(object):
 		self.server_socket = ''
 
 		# for handling split messages
+		self.buffering = False
 		self.split_buffer = ''
 
 	def serve(self):
@@ -73,6 +74,11 @@ class Server(object):
 
 						data = data.rstrip(' ')
 						# print data
+
+						# see if first message
+						if not self.getname(sock):
+							self.socket_dict[sock.fileno()][0] = data
+							continue
 
 						# See if data is a command
 						if re.search('^/', data):
@@ -186,6 +192,7 @@ class Server(object):
 			res = pad_msg(res+'\n')
 			sock.send(res)
 
+		# change chatname
 		elif re.search('^/chatname', cmd):
 			# print "handling chat name"
 			chatname = cmd.split()[1]
