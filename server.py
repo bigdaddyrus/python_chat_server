@@ -5,11 +5,11 @@ from utils import *
 import re
 
 RECV_BUFFER = MESSAGE_LENGTH
-
+HOST = "localhost"
 
 class Server(object):
-	def __init__(self, host, port):
-		self.host = host
+	def __init__(self, port):
+		self.host = HOST
 		self.port = port
 		# list of socket object
 		self.socket_list = []
@@ -241,12 +241,12 @@ def pad_msg(msg):
 
 if __name__ == "__main__":
 
-	if(len(sys.argv) < 3) :
-		print 'Usage : python server.py hostname port'
+	if(len(sys.argv) < 2) :
+		print 'Usage : python server.py port'
 		sys.exit()
-	host = sys.argv[1]
-	port = int(sys.argv[2])
 
-	chat_server = Server(host, port)
+	port = int(sys.argv[1])
+
+	chat_server = Server(port)
 	chat_server.serve()
 	sys.exit(chat_server.serve()) 

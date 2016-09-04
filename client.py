@@ -44,11 +44,12 @@ class Client(object):
 			 
 			# Get the list sockets which are readable
 			ready_to_read,ready_to_write,in_error = select.select(socket_list , [], [])
-			 
+			
 			for sock in ready_to_read:             
 
 				if sock == s:
 					# incoming message from remote server, s
+					# print "fuck"
 					data = sock.recv(RECV_BUFFER)
 					if not data :
 						print CLIENT_SERVER_DISCONNECTED.format(host, port)
@@ -59,11 +60,11 @@ class Client(object):
 
 
 
-						sys.stdout.write(CLIENT_WIPE_ME)
-						sys.stdout.write("\r"+data.rstrip(' '))
+						sys.stdout.write(CLIENT_WIPE_ME + "\r"+data.rstrip(' '))
 						sys.stdout.write(CLIENT_MESSAGE_PREFIX); sys.stdout.flush()     
 				
 				else :
+
 					if first_msg:
 						msg = "/chatname {}".format(self.chatname)
 						s.send(pad_msg(msg))
@@ -75,11 +76,12 @@ class Client(object):
 					# See if msg is a command
 					if re.search('^/', msg):
 						self.handle_cmd(msg, s)
-					
+						
 					# send msg if not a command
 					else:
+						
 						s.send(pad_msg(msg))
-					sys.stdout.write('[Me] '); sys.stdout.flush()
+					sys.stdout.write(CLIENT_MESSAGE_PREFIX); sys.stdout.flush()
 
 
 

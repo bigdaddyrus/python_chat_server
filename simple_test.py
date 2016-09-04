@@ -5,7 +5,7 @@ import sys
 import time
 from subprocess import Popen, PIPE
 
-SLEEP_SECONDS = 0.1
+SLEEP_SECONDS = 1
 
 class SimpleTest():
     def run(self, port):
@@ -63,7 +63,7 @@ class SimpleTest():
         time.sleep(SLEEP_SECONDS)
         self.kay_client.stdin.write("/join tas\n")
         # Alice should get a message that Kay joined.
-        # time.sleep(5)
+        # time.sleep(1)
         self.check_for_output(self.alice_client, "Kay has joined")
 
         # When Kay sends a message, Alice should receive it.
