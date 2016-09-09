@@ -16,7 +16,7 @@ class Server(object):
 		# each socket fileno key corresponds to [name, channel]
 		self.socket_dict = {}
 		# each channel key corresponds to an array of client sockets objects
-		self.channel_dict = {"split_messages":[]}
+		self.channel_dict = {}
 
 		self.server_socket = ''
 
@@ -211,9 +211,12 @@ class Server(object):
 
 		# send to user only
 		elif re.search('^/list', cmd):
+			if self.channel_dict:
 
-			res = '\n'.join([str(c) for c in self.channel_dict.keys()])
-			res = pad_msg(res+'\n')
+				res = '\n'.join([str(c) for c in self.channel_dict.keys()])
+				res = pad_msg(res+'\n')
+			else:
+				res = pad_msg("")
 			sock.send(res)
 
 		# change chatname
